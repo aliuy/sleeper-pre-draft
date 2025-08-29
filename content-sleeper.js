@@ -73,41 +73,9 @@ class SleeperDraftHelper {
     async findDraftElements() {
         this.log('Searching for draft interface elements...');
 
-        // Search for queue-related elements
-        const queueSelectors = [
-            'button[class*="queue"]',
-            'button[class*="add"]',
-            'button[class*="watch"]',
-            'button[class*="target"]',
-            '[aria-label*="queue"]',
-            '[aria-label*="add"]',
-            '[aria-label*="watch"]',
-            '[title*="queue"]',
-            '[title*="add"]'
-        ];
-
-        for (const selector of queueSelectors) {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach((el, index) => {
-                const key = `${selector}[${index}]`;
-                this.queueElements.set(key, {
-                    element: el,
-                    selector: selector,
-                    text: el.textContent?.trim()
-                });
-                this.log(`Queue element found: ${key} - "${el.textContent?.trim()}"`);
-            });
-        }
-
         // Search for player list containers
         const playerContainers = [
-            '[class*="player-list"]',
-            '[class*="available-players"]',
             '[class*="draft-board"]',
-            'table[class*="player"]',
-            'tbody[class*="player"]',
-            '.table tbody',
-            '[role="table"]',
             '[role="grid"]'
         ];
 
@@ -449,39 +417,24 @@ class SleeperDraftHelper {
         this.log(`Attempting to add ${player.full_name} to queue...`);
 
         try {
-            // Strategy 1: Look for .queue-action div for this player  
+            // Strategy 1: Look for .queue-action div for this player
             this.log(`Strategy 1: Looking for queue-action div for ${player.full_name}`);
             const queueActionButton = await this.findQueueActionByPlayer(player);
-            
+
             if (queueActionButton) {
                 this.log(`Found queue-action div for ${player.full_name}`);
-                
+
                 // Scroll into view and click
                 queueActionButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 await this.delay(100);
-                
+
                 queueActionButton.click();
                 this.log(`✅ Successfully clicked queue-action for ${player.full_name}`);
                 return true;
             }
 
-            // Strategy 2: Look for .watchlist-action as fallback
-            this.log(`Strategy 2: Looking for watchlist-action div for ${player.full_name}`);
-            const watchlistButton = await this.findWatchlistActionByPlayer(player);
-            
-            if (watchlistButton) {
-                this.log(`Found watchlist-action div for ${player.full_name}`);
-                
-                watchlistButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                await this.delay(100);
-                
-                watchlistButton.click();
-                this.log(`✅ Successfully clicked watchlist-action for ${player.full_name}`);
-                return true;
-            }
-
-            // No queue/watchlist buttons found
-            this.log(`❌ No queue/watchlist buttons found for ${player.full_name}`);
+            // No queue-action found
+            this.log(`❌ No queue-action found for ${player.full_name}`);
             return false;
 
         } catch (error) {
@@ -492,7 +445,9 @@ class SleeperDraftHelper {
 
     async findQueueActionByPlayer(player) {
         // Handle both string and object formats
-        const playerName = typeof player === 'string' ? player : player.full_name;
+        const playerName = typeof player === 'string' ? player : (
+            player?.full_name || player?.fullName || `${player?.first_name || ''} ${player?.last_name || ''}`
+        ).trim();
         this.log(`Strategy 1: Looking for queue-action div for ${playerName}`);
         
         // Find all queue-action divs
@@ -543,52 +498,15 @@ class SleeperDraftHelper {
         return await this.handleMissingPlayer(playerName);
     }
 
-    async findWatchlistActionByPlayer(player) {
-        // Handle both string and object formats
-        const playerName = typeof player === 'string' ? player : player.full_name;
-        this.log(`Strategy 2: Looking for watchlist-action div for ${playerName}`);
-        
-        // Find all watchlist-action divs as fallback
-        const watchlistActions = document.querySelectorAll('.watchlist-action');
-        this.log(`Found ${watchlistActions.length} total watchlist-action elements to search`);
-        
-        for (const watchlistDiv of watchlistActions) {
-            const playerContainer = watchlistDiv.closest('[class*="player"], .player-rank-item, .player-row, tr, li');
-            
-            if (playerContainer) {
-                const containerText = playerContainer.textContent || '';
-                
-                if (this.checkPlayerNameInText(player, containerText)) {
-                    this.log(`Matched watchlist-action for ${playerName} in: "${containerText.substring(0, 100)}..."`);
-                    return watchlistDiv;
-                }
-            }
-        }
-        
-        // Check if player is in currently loaded watchlist players
-        this.log(`🔍 Searching all ${watchlistActions.length} players for partial matches with "${playerName}"`);
-        const specialMatches = this.findAllPlayersWithPartialMatch(playerName, watchlistActions);
-        this.log(`Found ${specialMatches.length} potential matches for "${playerName}"`);
-        
-        if (specialMatches.length > 0) {
-            for (const match of specialMatches) {
-                if (this.checkPlayerNameInText(playerName, match.textContent)) {
-                    this.log(`✅ Found exact match for ${playerName} in watchlist!`);
-                    return match.querySelector('.watchlist-action');
-                }
-            }
-        }
-
-        // Player not found in current watchlist - ask for manual search
-        this.log(`❌ ${playerName} not found in currently loaded watchlist players`);
-        return await this.handleMissingPlayer(playerName);
-    }
-
     checkPlayerNameInText(player, text) {
         // Handle both string and object formats
-        const playerName = typeof player === 'string' ? player : player.full_name;
+        const playerName = typeof player === 'string' ? player : (
+            player?.full_name || player?.fullName || `${player?.first_name || ''} ${player?.last_name || ''}`
+        ).trim();
+
+        if (!playerName) return false;
         
-        const normalizedText = text.toLowerCase().replace(/[^a-z\s]/g, ' ');
+        const normalizedText = (text || '').toLowerCase().replace(/[^a-z\s]/g, ' ');
         const normalizedPlayerName = playerName.toLowerCase().replace(/[^a-z\s]/g, ' ');
         
         // Check full name match
@@ -615,23 +533,15 @@ class SleeperDraftHelper {
         this.log(`🔍 Attempting automatic search using React method...`);
         
         try {
-            // Try the new React-based search
+            // Try the React-based search for queue-action only
             const actionElement = await this.searchForPlayer(playerName, 'queue-action');
             
             if (actionElement) {
                 this.log(`✅ Found ${playerName} via automatic search!`);
                 return actionElement;
             }
-            
-            // If automatic search didn't work, try watchlist action
-            const watchlistElement = await this.searchForPlayer(playerName, 'watchlist-action');
-            
-            if (watchlistElement) {
-                this.log(`✅ Found ${playerName} via automatic watchlist search!`);
-                return watchlistElement;
-            }
-            
-            // If both automatic searches failed, give up
+
+            // Automatic search failed
             this.log(`❌ Automatic search failed for ${playerName}, skipping`);
             return null;
             
@@ -843,16 +753,16 @@ class SleeperDraftHelper {
             );
             
             if (reactKeys.length === 0) {
-                this.log('❌ No React fiber found, falling back to DOM events');
-                return await this.fallbackDOMSearch(input, text);
+                this.log('❌ No React fiber found — no DOM fallback configured, skipping');
+                return false;
             }
             
             const fiber = input[reactKeys[0]];
             const props = fiber?.memoizedProps;
             
             if (!props || !props.onChange) {
-                this.log('❌ No React onChange handler found, falling back to DOM events');
-                return await this.fallbackDOMSearch(input, text);
+                this.log('❌ No React onChange handler found — no DOM fallback configured, skipping');
+                return false;
             }
             
             this.log('✅ Found React onChange handler, calling it directly');
@@ -880,41 +790,16 @@ class SleeperDraftHelper {
             return true;
             
         } catch (error) {
-            this.log(`❌ React search failed: ${error.message}, falling back to DOM events`);
-            return await this.fallbackDOMSearch(input, text);
+            this.log(`❌ React search failed: ${error.message}`, 'error');
+            return false;
         }
-    }
-    
-    async fallbackDOMSearch(input, text) {
-        this.log(`Falling back to DOM event approach for "${text}"`);
-        
-        // Clear the input first and focus
-        input.value = '';
-        input.focus();
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Set value and fire events
-        input.value = text;
-        
-        // Fire the events that we know work from manual testing
-        const inputEvent = new Event('input', { bubbles: true });
-        const changeEvent = new Event('change', { bubbles: true });
-        
-        input.dispatchEvent(inputEvent);
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        input.dispatchEvent(changeEvent);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        return true;
     }
 
     async clearSearchInput(input) {
         this.log('🧹 Clearing search input using React method...');
         
         try {
-            // Try React approach first
+            // Try React approach only
             const reactKeys = Object.keys(input).filter(key => 
                 key.startsWith('__reactFiber') || 
                 key.startsWith('__reactInternalInstance')
@@ -948,18 +833,11 @@ class SleeperDraftHelper {
                 }
             }
             
-            // Fallback to DOM events
-            this.log('Falling back to DOM events for clearing search');
-            input.value = '';
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-            await new Promise(resolve => setTimeout(resolve, 500));
+            this.log('❌ No React onChange handler found — no DOM fallback configured, skipping clear');
             
         } catch (error) {
-            this.log(`Error clearing search: ${error.message}`);
+            this.log(`❌ React clear failed: ${error.message}`, 'error');
         }
-        
-        this.log('✅ Search input cleared');
     }
 
     findAllPlayersWithPartialMatch(targetName, actionElements) {
@@ -1022,7 +900,7 @@ class SleeperDraftHelper {
 
         if (failureCount > 0) {
             html += `<div class="error-note">
-                ⚠️ ${failureCount} players could not be added. ${hasSimulatedResults ? 'This is normal in simulation mode.' : 'Try refreshing the page or checking if the players are visible in the draft board.'}
+                ⚠️ ${failureCount} players could not be added. Try refreshing the page or checking if the players are visible in the draft board.
             </div>`;
         }
 
