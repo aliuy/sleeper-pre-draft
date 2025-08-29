@@ -1,0 +1,350 @@
+/* Sleeper Draft Helper Styles */
+
+/* Main Interface Styles */
+.sleeper-main-interface {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-height: 80vh;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #1a1a1a;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  z-index: 10000;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.sleeper-main-interface.hidden {
+  display: none;
+}
+
+/* Header */
+.sleeper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.sleeper-header h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.sleeper-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.sleeper-close:hover {
+  background: #e2e8f0;
+  color: #1a1a1a;
+}
+
+/* Content */
+.sleeper-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.sleeper-section {
+  margin-bottom: 20px;
+  padding: 20px;
+}
+
+.sleeper-section label {
+  display: block;
+  margin-bottom: 8px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Input Elements */
+#player-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1a1a1a;
+  background: #ffffff;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+#player-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+#player-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Actions */
+.sleeper-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.sleeper-btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 2px solid #e2e8f0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  color: #374151;
+}
+
+.sleeper-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e0;
+}
+
+.sleeper-btn.primary {
+  background: #4299e1;
+  color: #ffffff;
+  border-color: #4299e1;
+}
+
+.sleeper-btn.primary:hover {
+  background: #3182ce;
+  border-color: #3182ce;
+}
+
+.sleeper-btn.secondary {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.sleeper-btn.secondary:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Results */
+.sleeper-results {
+  margin-top: 16px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  min-height: 40px;
+  padding: 16px;
+}
+
+.analysis-summary {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.result-item.high {
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+  color: #1a1a1a;
+}
+
+.result-item.medium {
+  background: #fffbeb;
+  border: 1px solid #fbd38d;
+  color: #1a1a1a;
+}
+
+.result-item.low {
+  background: #fffbeb;
+  border: 1px solid #fbd38d;
+  color: #1a1a1a;
+}
+
+.result-item.error {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  color: #1a1a1a;
+}
+
+.player-match {
+  flex: 1;
+  color: #374151;
+}
+
+.confidence {
+  font-weight: 600;
+  color: #4299e1;
+}
+
+/* Player Results (used in clear queue) */
+.player-result {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.player-result.good {
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+  color: #1a1a1a;
+}
+
+.player-result.error {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  color: #1a1a1a;
+}
+
+/* Status Messages */
+.loading {
+  color: #4299e1;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.error {
+  color: #e53e3e;
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+
+/* Queue Operation Results */
+.queue-summary {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  color: #0c4a6e;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.success-note {
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  color: #14532d;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.error-note {
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #7f1d1d;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Floating Action Button */
+.sleeper-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: #4299e1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+  z-index: 9999;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.sleeper-fab:hover {
+  background: #3182ce;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(66, 153, 225, 0.5);
+}
+
+.sleeper-fab-icon {
+  font-size: 24px;
+  color: #ffffff;
+}
+
+.sleeper-fab-tooltip {
+  position: absolute;
+  right: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a1a1a;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.sleeper-fab:hover .sleeper-fab-tooltip {
+  opacity: 1;
+}
+
+/* Loading animation */
+.loading::before {
+  content: "⏳ ";
+  margin-right: 8px;
+}
+
+/* Queue Button States */
+#queue-players:disabled {
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  border-color: #d1d5db !important;
+}
+
+#queue-players.primary:not(:disabled) {
+  background: #10b981;
+  border-color: #10b981;
+}

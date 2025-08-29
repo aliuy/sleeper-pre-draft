@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Sleeper Draft Queue Helper",
+  "version": "0.1.0",
+  "description": "Bulk import players to your Sleeper fantasy football draft queue from custom cheatsheets.",
+  
+  "icons": {
+    "16": "img/icon16.png",
+    "32": "img/icon32.png", 
+    "48": "img/icon48.png",
+    "128": "img/icon128.png"
+  },
+
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+
+  "host_permissions": [
+    "*://*.sleeper.com/*",
+    "*://*.sleeper.app/*",
+    "https://api.sleeper.app/*"
+  ],
+
+  "content_scripts": [{
+    "matches": [
+      "*://*.sleeper.com/draft/*",
+      "*://*.sleeper.com/leagues/*/predraft*",
+      "*://*.sleeper.com/leagues/*/draft/*", 
+      "*://*.sleeper.app/draft/*",
+      "*://*.sleeper.app/leagues/*/draft/*", 
+      "*://*.sleeper.app/mock-draft/*"
+    ],
+    "js": [
+      "name-matching.js",
+      "sleeper-api.js",
+      "content-sleeper.js"
+    ],
+    "css": ["sleeper-styles.css"],
+    "run_at": "document_end",
+    "world": "MAIN"
+  }],
+
+  "web_accessible_resources": [{
+    "resources": [
+      "img/icon16.png"
+    ],
+    "matches": [
+      "*://*.sleeper.com/*",
+      "*://*.sleeper.app/*"
+    ]
+  }]
+}
