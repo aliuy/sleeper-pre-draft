@@ -125,7 +125,12 @@ const NameMatcher = (function() {
 
   return {
     /**
-     * Core name matching function (from Yahoo extension)
+     * Core name matching function adapted from Yahoo extension.
+     * Uses advanced regex patterns and diacritic folding for robust name matching.
+     * 
+     * @param {string} n0 - First name to compare
+     * @param {string} n1 - Second name to compare
+     * @returns {boolean} True if names match, false otherwise
      */
     namesMatch: function(n0, n1) {
       n0 = asciiFold(n0);
@@ -143,7 +148,17 @@ const NameMatcher = (function() {
     },
 
     /**
-     * Enhanced matching for Sleeper player objects
+     * Enhanced matching for Sleeper player objects with filtering and confidence scoring.
+     * Searches through player database and returns matches sorted by confidence.
+     * 
+     * @param {string} searchName - Name to search for
+     * @param {Object} players - Player database object
+     * @param {Object} [options={}] - Search options
+     * @param {boolean} [options.requireActive=true] - Only include active players
+     * @param {boolean} [options.preferActive=false] - Prefer active players in results
+     * @param {Array} [options.preferredPositions=null] - Array of preferred positions
+     * @param {boolean} [options.requirePosition=false] - Require position match
+     * @returns {Array} Array of matching players with confidence scores
      */
     findPlayerMatches: function(searchName, players, options = {}) {
       const {
@@ -191,7 +206,12 @@ const NameMatcher = (function() {
     },
 
     /**
-     * Calculate confidence score for a match
+     * Calculate confidence score for a name match based on various factors.
+     * 
+     * @param {string} searchName - Original search name
+     * @param {string} playerName - Matched player's full name
+     * @param {Object} playerData - Player data object
+     * @returns {number} Confidence score between 0 and 1
      */
     calculateConfidence: function(searchName, playerName, playerData) {
       let confidence = 0.5; // Base confidence
@@ -221,7 +241,13 @@ const NameMatcher = (function() {
     },
 
     /**
-     * Find best single match with disambiguation
+     * Find best single match with disambiguation logic.
+     * Returns single best match or indicates when disambiguation is needed.
+     * 
+     * @param {string} searchName - Name to search for
+     * @param {Object} players - Player database object
+     * @param {Object} [options={}] - Search options
+     * @returns {Object|null} Best match object or null if no matches found
      */
     findBestMatch: function(searchName, players, options = {}) {
       const matches = this.findPlayerMatches(searchName, players, options);
@@ -263,7 +289,13 @@ const NameMatcher = (function() {
     },
 
     /**
-     * Batch process multiple player names
+     * Batch process multiple player names for efficient matching.
+     * Categorizes results into matched, unmatched, ambiguous, and error groups.
+     * 
+     * @param {Array} playerNames - Array of player names to process
+     * @param {Object} players - Player database object
+     * @param {Object} [options={}] - Search options
+     * @returns {Object} Results object with categorized matches
      */
     processPlayerList: function(playerNames, players, options = {}) {
       const results = {

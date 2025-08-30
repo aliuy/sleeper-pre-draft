@@ -5,9 +5,16 @@
  * - Player data fetching and caching
  * - NFL state information
  * - Rate limiting and error handling
+ * 
+ * @class SleeperAPI
  */
-
 class SleeperAPI {
+  /**
+   * Creates an instance of SleeperAPI.
+   * Initializes cache, rate limiting, and API configuration.
+   * 
+   * @constructor
+   */
   constructor() {
     this.baseURL = 'https://api.sleeper.app/v1';
     this.cache = new Map();
@@ -17,7 +24,12 @@ class SleeperAPI {
   }
 
   /**
-   * Fetch all NFL players with caching
+   * Fetch all NFL players with caching and storage management.
+   * Attempts to use cached data first, then fetches fresh data if needed.
+   * 
+   * @param {boolean} [forceRefresh=false] - Whether to bypass cache and fetch fresh data
+   * @async
+   * @returns {Promise<Object>} Object containing all NFL players indexed by player ID
    */
   async getPlayers(forceRefresh = false) {
     const cacheKey = 'nfl_players';
@@ -80,7 +92,13 @@ class SleeperAPI {
   }
 
   /**
-   * Make HTTP request with rate limiting
+   * Make HTTP request with rate limiting and error handling.
+   * Enforces delay between requests to respect API limits.
+   * 
+   * @param {string} endpoint - API endpoint to request (without base URL)
+   * @async
+   * @returns {Promise<Object>} Parsed JSON response from the API
+   * @throws {Error} If HTTP request fails or returns non-200 status
    */
   async makeRequest(endpoint) {
     // Simple rate limiting
@@ -103,7 +121,11 @@ class SleeperAPI {
   }
 
   /**
-   * Check if cached data is still valid
+   * Check if cached data is still valid based on timestamp and expiry settings.
+   * 
+   * @param {string} key - Cache key to check
+   * @param {number|null} [customExpiry=null] - Custom expiry time in milliseconds, uses default if null
+   * @returns {boolean} True if cached data is still valid, false otherwise
    */
   isCacheValid(key, customExpiry = null) {
     const cached = this.cache.get(key);
@@ -114,7 +136,13 @@ class SleeperAPI {
   }
 
   /**
-   * Static convenience method for getting all players
+   * Static convenience method for getting all players using a singleton instance.
+   * Ensures cache persistence across multiple calls.
+   * 
+   * @param {boolean} [forceRefresh=false] - Whether to bypass cache and fetch fresh data
+   * @static
+   * @async
+   * @returns {Promise<Object>} Object containing all NFL players indexed by player ID
    */
   static async getAllPlayers(forceRefresh = false) {
     // Reuse single instance so the in-memory cache persists across calls

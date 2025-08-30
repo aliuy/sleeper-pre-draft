@@ -5,7 +5,19 @@ console.log('[Content Script] Loading Sleeper Draft Helper...');
 console.log('[Content Script] NameMatcher available:', typeof NameMatcher);
 console.log('[Content Script] SleeperAPI available:', typeof SleeperAPI);
 
+/**
+ * Main class for the Sleeper Draft Helper Chrome extension.
+ * Handles player analysis, queue management, and DOM manipulation for Sleeper draft pages.
+ * 
+ * @class SleeperDraftHelper
+ */
 class SleeperDraftHelper {
+    /**
+     * Creates an instance of SleeperDraftHelper.
+     * Initializes properties and starts the setup process.
+     * 
+     * @constructor
+     */
     constructor() {
         this.isDebug = false;
         this.players = null;
@@ -17,6 +29,12 @@ class SleeperDraftHelper {
         this.init();
     }
 
+    /**
+     * Logs messages with timestamps and different severity levels.
+     * 
+     * @param {string} message - The message to log
+     * @param {string} [level='info'] - The log level: 'info', 'warn', or 'error'
+     */
     log(message, level = 'info') {
         const timestamp = new Date().toISOString();
         const prefix = `[Sleeper Helper ${timestamp}]`;
@@ -30,6 +48,13 @@ class SleeperDraftHelper {
         }
     }
 
+    /**
+     * Initializes the Sleeper Draft Helper by loading players, finding draft elements,
+     * and injecting the UI. Handles page ready state checking.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async init() {
         try {
             // Wait for page to be ready
@@ -57,7 +82,12 @@ class SleeperDraftHelper {
     }
 }
 
-// Phase 4: Enhanced UI/UX helper methods
+/**
+ * Sets the loading state of a button with visual feedback.
+ * 
+ * @param {HTMLElement} button - The button element to modify
+ * @param {boolean} isLoading - Whether the button should show loading state
+ */
 setButtonLoading(button, isLoading) {
     if (isLoading) {
         button.classList.add('loading');
@@ -71,20 +101,46 @@ setButtonLoading(button, isLoading) {
     }
 }
 
+/**
+ * Shows an error message in the specified container.
+ * 
+ * @param {HTMLElement} container - The container element to display the error in
+ * @param {string} message - The error message to display
+ */
 showError(container, message) {
     container.className = 'sleeper-results error';
     container.innerHTML = `<div class="error">❌ ${message}</div>`;
 }
 
+/**
+ * Shows a success message in the specified container.
+ * 
+ * @param {HTMLElement} container - The container element to display the success in
+ * @param {string} message - The success message to display
+ */
 showSuccess(container, message) {
     container.className = 'sleeper-results success';
     container.innerHTML = `<div class="success">✅ ${message}</div>`;
 }
 
+/**
+ * Shows an informational message in the specified container.
+ * 
+ * @param {HTMLElement} container - The container element to display the info in
+ * @param {string} message - The informational message to display
+ */
 showInfo(container, message) {
     container.className = 'sleeper-results';
     container.innerHTML = `<div class="info">ℹ️ ${message}</div>`;
-}    async loadPlayers() {
+}
+
+/**
+ * Loads player data from the Sleeper API with error handling and logging.
+ * 
+ * @async
+ * @returns {Promise<void>}
+ */
+async loadPlayers() {
         try {
             this.log('Loading player data...');
             this.log('SleeperAPI available:', typeof SleeperAPI);
@@ -98,6 +154,13 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Finds and identifies draft interface elements on the page using various selectors.
+     * Logs discovered elements for debugging purposes.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async findDraftElements() {
         this.log('Searching for draft interface elements...');
 
@@ -122,6 +185,13 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Injects the main UI interface into the page by finding a suitable container
+     * and creating the necessary DOM elements.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async injectUI() {
         this.log('Injecting extension UI...');
 
@@ -136,6 +206,11 @@ showInfo(container, message) {
         this.log('UI injection complete');
     }
 
+    /**
+     * Creates a floating action button for easy access to the draft helper interface.
+     * 
+     * @returns {HTMLElement} The floating action button element
+     */
     createFloatingActionButton() {
         const fab = document.createElement('div');
         fab.id = 'sleeper-helper-fab';
@@ -152,6 +227,12 @@ showInfo(container, message) {
         return fab;
     }
 
+    /**
+     * Creates the main interface container with all necessary UI elements including
+     * textarea, buttons, results area, and settings panel.
+     * 
+     * @returns {HTMLElement} The main interface container element
+     */
     createMainInterface() {
         const container = document.createElement('div');
         container.id = 'sleeper-helper-main';
@@ -213,6 +294,11 @@ showInfo(container, message) {
         return container;
     }
 
+    /**
+     * Sets up event listeners for the main interface buttons and interactions.
+     * 
+     * @param {HTMLElement} container - The main interface container
+     */
     setupEventListeners(container) {
         // Player analysis
         const analyzeBtn = container.querySelector('#analyze-players');
@@ -247,6 +333,11 @@ showInfo(container, message) {
         this.setupResizeHandlers(container);
     }
 
+    /**
+     * Sets up event handlers for the settings panel controls.
+     * 
+     * @param {HTMLElement} container - The main interface container
+     */
     setupSettingsHandlers(container) {
         const delayInput = container.querySelector('#delay-setting');
         const autoScrollInput = container.querySelector('#auto-scroll-setting');
@@ -278,6 +369,11 @@ showInfo(container, message) {
         });
     }
 
+    /**
+     * Sets up keyboard shortcuts for the interface.
+     * 
+     * @param {HTMLElement} container - The main interface container
+     */
     setupKeyboardShortcuts(container) {
         const playerInput = container.querySelector('#player-input');
         
@@ -304,7 +400,12 @@ showInfo(container, message) {
         });
     }
 
-    // Phase 4: Settings management
+    /**
+     * Loads user settings from storage with fallback to default values.
+     * Updates UI elements to reflect current settings.
+     * 
+     * @returns {Object} The loaded settings object
+     */
     loadSettings() {
         const defaultSettings = {
             delay: 150,
@@ -329,6 +430,11 @@ showInfo(container, message) {
         if (soundInput) soundInput.checked = this.settings.soundNotifications;
     }
 
+    /**
+     * Saves current settings to localStorage.
+     * 
+     * @returns {void}
+     */
     saveSettings() {
         try {
             localStorage.setItem('sleeper-helper-settings', JSON.stringify(this.settings));
@@ -337,6 +443,11 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Resets settings to default values and removes from localStorage.
+     * 
+     * @returns {void}
+     */
     resetSettings() {
         localStorage.removeItem('sleeper-helper-settings');
         this.settings = {
@@ -346,6 +457,11 @@ showInfo(container, message) {
         };
     }
 
+    /**
+     * Plays a notification sound if sound notifications are enabled in settings.
+     * 
+     * @returns {void}
+     */
     playNotificationSound() {
         if (this.settings?.soundNotifications) {
             try {
@@ -369,6 +485,12 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Sets up resize handlers for the main interface container.
+     * Allows users to resize the interface by dragging the resize handle.
+     * 
+     * @param {HTMLElement} container - The main interface container
+     */
     setupResizeHandlers(container) {
         const resizeHandle = container.querySelector('.sleeper-resize-handle');
         let isResizing = false;
@@ -409,6 +531,11 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Toggles the visibility of the main interface.
+     * 
+     * @returns {void}
+     */
     toggleMainInterface() {
         const main = document.getElementById('sleeper-helper-main');
         if (main.classList.contains('hidden')) {
@@ -418,6 +545,13 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Analyzes player names from input text against the Sleeper player database.
+     * Displays match results with confidence scores and player information.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async analyzePlayers() {
         const input = document.getElementById('player-input');
         const results = document.getElementById('analysis-results');
@@ -493,6 +627,12 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Displays the results of player analysis in a formatted HTML structure.
+     * Shows match quality, player details, and enables queue operations.
+     * 
+     * @param {Array} analysis - Array of analysis results for each player
+     */
     displayAnalysisResults(analysis) {
         const results = document.getElementById('analysis-results');
         
@@ -533,6 +673,13 @@ showInfo(container, message) {
         queueBtn.textContent = `Add ${this.lastAnalysis.length} Players to Queue`;
     }
 
+    /**
+     * Validates input player names against the current draft queue to check
+     * which players are already queued and which are missing.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async validateQueue() {
         const input = document.getElementById('player-input');
         const results = document.getElementById('analysis-results');
@@ -574,6 +721,14 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Compares analyzed input players with the current queue to determine
+     * which players are already queued and which are not.
+     * 
+     * @param {Array} inputAnalysis - Array of analyzed input players
+     * @param {Array} queuedPlayers - Array of currently queued players
+     * @returns {Object} Object containing inQueue, notInQueue, and invalidInputs arrays
+     */
     compareInputWithQueue(inputAnalysis, queuedPlayers) {
         const queueNames = queuedPlayers.map(q => q.name.toLowerCase());
         
@@ -610,6 +765,14 @@ showInfo(container, message) {
         return { inQueue, notInQueue, invalidInputs };
     }
 
+    /**
+     * Compares two player names for matching using various normalization
+     * and fuzzy matching techniques.
+     * 
+     * @param {string} name1 - First player name to compare
+     * @param {string} name2 - Second player name to compare
+     * @returns {boolean} True if names match, false otherwise
+     */
     namesMatch(name1, name2) {
         // Simple name matching - enhanced for better matching
         const normalize = name => name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
@@ -656,6 +819,13 @@ showInfo(container, message) {
         return false;
     }
 
+    /**
+     * Displays validation results comparing input players with current queue.
+     * Shows which players are already queued, not queued, or invalid.
+     * 
+     * @param {Object} validation - Validation results object
+     * @param {number} queueSize - Number of players currently in queue
+     */
     displayValidationResults(validation, queueSize) {
         const results = document.getElementById('analysis-results');
         const { inQueue, notInQueue, invalidInputs } = validation;
@@ -717,6 +887,13 @@ showInfo(container, message) {
         results.innerHTML = html;
     }
 
+    /**
+     * Queues all previously analyzed players by attempting to add them to the draft queue.
+     * Shows progress and results for each player addition attempt.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async queuePlayers() {
         if (!this.lastAnalysis || this.lastAnalysis.length === 0) {
             this.log('No analyzed players to queue', 'error');
@@ -811,6 +988,13 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Clears all players from the draft queue by finding and clicking remove buttons.
+     * Rescans after each removal to handle dynamic queue updates.
+     * 
+     * @async
+     * @returns {Promise<void>}
+     */
     async clearQueue() {
         this.log('Starting queue clear operation...');
         
@@ -920,7 +1104,14 @@ showInfo(container, message) {
         }
     }
 
-    // Helper method for displaying clear results
+    /**
+     * Helper method for displaying clear queue results in a formatted HTML structure.
+     * 
+     * @param {Array} clearResults - Array of clear operation results
+     * @param {number} successCount - Number of successfully removed players
+     * @param {number} failureCount - Number of failed removal attempts
+     * @param {number} totalPlayers - Total number of players that were in queue
+     */
     displayClearResults(clearResults, successCount, failureCount, totalPlayers) {
         const results = document.getElementById('analysis-results');
         
@@ -956,6 +1147,13 @@ showInfo(container, message) {
         results.innerHTML = html;
     }
 
+    /**
+     * Attempts to add a player to the draft queue by finding and clicking their queue action button.
+     * 
+     * @param {Object} player - Player object containing player details
+     * @async
+     * @returns {Promise<boolean>} True if player was successfully added to queue, false otherwise
+     */
     async addPlayerToQueue(player) {
         this.log(`Attempting to add ${player.full_name} to queue...`);
 
@@ -986,6 +1184,14 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Finds the queue action button for a specific player by searching through
+     * available queue action elements and matching player names.
+     * 
+     * @param {Object} player - Player object or player name string
+     * @async
+     * @returns {Promise<HTMLElement|null>} The queue action element if found, null otherwise
+     */
     async findQueueActionByPlayer(player) {
         // Handle both string and object formats
         const playerName = typeof player === 'string' ? player : (
@@ -1041,6 +1247,14 @@ showInfo(container, message) {
         return await this.handleMissingPlayer(playerName);
     }
 
+    /**
+     * Checks if a player name exists within a given text string using normalization
+     * and partial matching techniques.
+     * 
+     * @param {Object|string} player - Player object or player name string
+     * @param {string} text - Text to search within
+     * @returns {boolean} True if player name is found in text, false otherwise
+     */
     checkPlayerNameInText(player, text) {
         // Handle both string and object formats
         const playerName = typeof player === 'string' ? player : (
@@ -1071,6 +1285,14 @@ showInfo(container, message) {
         return false;
     }
 
+    /**
+     * Handles cases where a player is not found in the current visible list
+     * by attempting automatic search using React-based methods.
+     * 
+     * @param {string} playerName - Name of the player to search for
+     * @async
+     * @returns {Promise<HTMLElement|null>} The action element if found via search, null otherwise
+     */
     async handleMissingPlayer(playerName) {
         this.log(`❌ ${playerName} not found in current player list`);
         this.log(`🔍 Attempting automatic search using React method...`);
@@ -1094,6 +1316,15 @@ showInfo(container, message) {
         }
     }
     
+    /**
+     * Searches for a player using Sleeper's search functionality by interacting
+     * with search inputs and filtering results.
+     * 
+     * @param {string} playerName - Name of the player to search for
+     * @param {string} [actionType='queue-action'] - Type of action element to find
+     * @async
+     * @returns {Promise<HTMLElement|null>} The action element if found, null otherwise
+     */
     async searchForPlayer(playerName, actionType = 'queue-action') {
         this.log(`🔍 Searching for ${playerName} using Sleeper's search functionality...`);
         
@@ -1285,6 +1516,15 @@ showInfo(container, message) {
         await new Promise(resolve => setTimeout(resolve, 500));
     }
 
+    /**
+     * Types text into an input field using React's onChange handler for compatibility
+     * with React-based interfaces.
+     * 
+     * @param {HTMLElement} input - Input element to type into
+     * @param {string} text - Text to type
+     * @async
+     * @returns {Promise<boolean>} True if typing was successful, false otherwise
+     */
     async typeTextRealistically(input, text) {
         this.log(`🔧 Using React onChange method to search for "${text}"`);
         
@@ -1338,6 +1578,14 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Clears a search input field using React's onChange handler to properly
+     * reset React state and trigger re-renders.
+     * 
+     * @param {HTMLElement} input - Input element to clear
+     * @async
+     * @returns {Promise<void>}
+     */
     async clearSearchInput(input) {
         this.log('🧹 Clearing search input using React method...');
         
@@ -1383,6 +1631,14 @@ showInfo(container, message) {
         }
     }
 
+    /**
+     * Finds all players that have partial name matches with the target name.
+     * Useful for fuzzy searching when exact matches aren't found.
+     * 
+     * @param {string} targetName - Target player name to search for
+     * @param {NodeList} actionElements - Collection of action elements to search through
+     * @returns {Array} Array of match objects with match details
+     */
     findAllPlayersWithPartialMatch(targetName, actionElements) {
         this.log(`🔍 Searching all ${actionElements.length} players for partial matches with "${targetName}"`);
         
@@ -1417,6 +1673,13 @@ showInfo(container, message) {
         return matches;
     }
 
+    /**
+     * Displays the results of queue operations in a formatted HTML structure.
+     * 
+     * @param {Array} queueResults - Array of queue operation results
+     * @param {number} successCount - Number of successfully queued players
+     * @param {number} failureCount - Number of failed queue attempts
+     */
     displayQueueResults(queueResults, successCount, failureCount) {
         const results = document.getElementById('analysis-results');
         
@@ -1450,6 +1713,13 @@ showInfo(container, message) {
         results.innerHTML = html;
     }
 
+    /**
+     * Finds all players currently in the draft queue by locating delete/remove buttons
+     * and extracting associated player information.
+     * 
+     * @async
+     * @returns {Promise<Array>} Array of queued player objects with name, element, and removeButton
+     */
     async findQueuedPlayers() {
         this.log('Looking for queued players with .delete-button elements...');
         const queuedPlayers = [];
@@ -1499,6 +1769,13 @@ showInfo(container, message) {
         return queuedPlayers;
     }
 
+    /**
+     * Extracts player name from text by removing common UI elements and
+     * filtering out positions and numbers.
+     * 
+     * @param {string} text - Text containing player information
+     * @returns {string|null} Extracted player name or null if unable to extract
+     */
     extractPlayerName(text) {
         // Clean up the text and extract player name
         const cleanText = text.trim()
@@ -1535,6 +1812,14 @@ showInfo(container, message) {
         return null;
     }
 
+    /**
+     * Removes a player from the draft queue by clicking their remove button.
+     * Includes validation to ensure the button still exists and is clickable.
+     * 
+     * @param {Object} queuedPlayer - Queued player object with name and removeButton
+     * @async
+     * @returns {Promise<boolean>} True if player was successfully removed, false otherwise
+     */
     async removePlayerFromQueue(queuedPlayer) {
         this.log(`Attempting to remove ${queuedPlayer.name} from queue...`);
 
@@ -1601,6 +1886,12 @@ showInfo(container, message) {
         results.innerHTML = html;
     }
 
+    /**
+     * Creates a delay/pause in execution for the specified number of milliseconds.
+     * 
+     * @param {number} ms - Number of milliseconds to delay
+     * @returns {Promise} Promise that resolves after the specified delay
+     */
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
