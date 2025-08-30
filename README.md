@@ -2,21 +2,12 @@
 
 This extension adds bulk player import functionality to Sleeper fantasy football draft queues, inspired by [Henry Goodman's extension for Yahoo fantasy football](https://github.com/hgoodman/yahoo-pre-draft).
 
-### Current Status
-- **Phase 1 Complete**: API research, foundation, and initial extension structure
-- **Phase 2 Complete**: DOM analysis and React integration
-- **Phase 3 Complete**: Queue manipulation and bulk import functionality
-- **Phase 4 Complete**: UI/UX polish, performance optimization, and advanced features
+### Features & Capabilities
 
-### Phase 4 Enhancements ✨
-- **Enhanced UI/UX**: Smooth animations, progress bars, and visual feedback
-- **Resizable Modal**: Drag to resize the extension window for better visibility
-- **Settings Panel**: Customizable delays, notifications, and preferences
-- **Keyboard Shortcuts**: Ctrl+Enter to analyze, Escape to close
-- **Progress Tracking**: Real-time progress bars for all operations
-- **Error Recovery**: Robust error handling with retry mechanisms
-- **Sound Notifications**: Optional audio feedback when operations complete
-- **Tooltips & Help**: Contextual help and keyboard shortcut hints
+- **Bulk Player Import**: Paste lists of player names for instant queue population
+- **Smart Name Matching**: Advanced fuzzy matching handles variations and nicknames
+- **Queue Validation**: Check which players from your list are already queued
+- **Queue Management**: Clear entire queue or add multiple players efficiently
 
 ### Extension Structure
 ```
@@ -53,30 +44,14 @@ This extension adds bulk player import functionality to Sleeper fantasy football
 - Look for floating 📋 button (bottom-right)
 - Click it → Clean white interface should open
 
-**3. Test Enhanced Features**
+**3. Test Queue Functionality**
 ```
-New Phase 4 Features:
-• Click ⚙️ settings button → Customize operation delays and notifications
-• Use Ctrl+Enter to quickly analyze players
-• Drag from bottom-right corner to resize window
-• Watch real-time progress bars during operations
-• Enable sound notifications for completion alerts
+Paste test names:
+Josh Allen
+Christian McCaffrey
+Travis Kelce
+Cooper Kupp
+Tyreek Hill
 ```
-
-### Features & Capabilities
-
-#### Core Functionality
-- **Bulk Player Import**: Paste lists of player names for instant queue population
-- **Smart Name Matching**: Advanced fuzzy matching handles variations and nicknames
-- **Queue Validation**: Check which players from your list are already queued
-- **Queue Management**: Clear entire queue or add multiple players efficiently
-
-#### Phase 4 Advanced Features
-- **Resizable Interface**: Drag-resize modal for optimal viewing of large player lists
-- **Real-time Progress**: Visual progress bars and status updates for all operations
-- **Customizable Settings**: Adjust operation delays, enable notifications, and more
-- **Keyboard Shortcuts**: Fast access with Ctrl+Enter (analyze) and Escape (close)
-- **Enhanced Error Handling**: Robust retry mechanisms and detailed error reporting
-- **Visual Feedback**: Smooth animations, color-coded results, and status indicators
-- **Sound Notifications**: Optional audio alerts when operations complete
-- **Persistent Settings**: Your preferences are saved across browser sessions
+- Click "Analyze Players" → Expected: 95%+ match confidence
+- Click "Add X Players to Queue" → Expected: Players added to draft queue
