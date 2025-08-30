@@ -195,8 +195,8 @@ class SleeperDraftHelper {
             const analysis = [];
 
             for (const name of playerNames) {
-                // Use NameMatcher.findPlayerMatches method
-                const matches = NameMatcher.findPlayerMatches(name, this.players);
+                // Use NameMatcher.findPlayerMatches method - include IR/inactive players but prefer active
+                const matches = NameMatcher.findPlayerMatches(name, this.players, { requireActive: false, preferActive: true });
                 analysis.push({
                     input: name,
                     matches: matches,
@@ -215,7 +215,11 @@ class SleeperDraftHelper {
     displayAnalysisResults(analysis) {
         const results = document.getElementById('analysis-results');
         
-        let html = `<div class="analysis-summary">Found ${analysis.length} players:</div>`;
+        // Count how many players were actually found (have matches)
+        const foundCount = analysis.filter(item => item.bestMatch).length;
+        const totalCount = analysis.length;
+        
+        let html = `<div class="analysis-summary">Found ${foundCount} out of ${totalCount} players:</div>`;
         
         analysis.forEach((item, index) => {
             const bestMatch = item.bestMatch;

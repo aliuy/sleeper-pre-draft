@@ -148,6 +148,7 @@ const NameMatcher = (function() {
     findPlayerMatches: function(searchName, players, options = {}) {
       const {
         requireActive = true,
+        preferActive = false,
         preferredPositions = null,
         requirePosition = false
       } = options;
@@ -158,7 +159,7 @@ const NameMatcher = (function() {
         // Skip players without required data
         if (!player.first_name || !player.last_name) continue;
         
-        // Filter by active status
+        // Filter by active status (hard requirement)
         if (requireActive && player.status !== 'Active') continue;
         
         // Filter by position if specified
@@ -177,8 +178,16 @@ const NameMatcher = (function() {
         }
       }
 
-      // Sort by confidence score
-      return matches.sort((a, b) => b.confidence - a.confidence);
+      // Sort by confidence score, with optional preference for active players
+      return matches.sort((a, b) => {
+        // If preferActive is enabled, prioritize active players over inactive
+        if (preferActive && a.status !== b.status) {
+          if (a.status === 'Active' && b.status !== 'Active') return -1;
+          if (b.status === 'Active' && a.status !== 'Active') return 1;
+        }
+        // Otherwise sort by confidence score
+        return b.confidence - a.confidence;
+      });
     },
 
     /**
