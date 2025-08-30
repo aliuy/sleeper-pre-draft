@@ -6,8 +6,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 500px;
-  min-width: 400px;
+  width: 700px;
+  min-width: 600px;
   max-width: 90vw;
   height: auto;
   min-height: 300px;
@@ -46,6 +46,34 @@
   color: #1a1a1a;
 }
 
+.sleeper-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sleeper-settings-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sleeper-settings-btn:hover {
+  background: #e2e8f0;
+  color: #1a1a1a;
+  transform: rotate(90deg);
+}
+
 .sleeper-close {
   background: none;
   border: none;
@@ -62,6 +90,62 @@
 .sleeper-close:hover {
   background: #e2e8f0;
   color: #1a1a1a;
+}
+
+/* Settings Panel */
+.sleeper-settings {
+  border-top: 1px solid #e2e8f0;
+  padding: 20px;
+  background: #f8fafc;
+  animation: slideDown 0.3s ease;
+}
+
+.sleeper-settings.hidden {
+  display: none;
+}
+
+.sleeper-settings h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.setting-item {
+  margin-bottom: 12px;
+}
+
+.setting-item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.setting-item input[type="number"] {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.setting-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Content */
@@ -132,6 +216,7 @@
   display: flex;
   gap: 12px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 .sleeper-btn {
@@ -144,11 +229,82 @@
   transition: all 0.2s ease;
   background: #ffffff;
   color: #374151;
+  position: relative;
+  overflow: hidden;
 }
 
 .sleeper-btn:hover {
   background: #f8fafc;
   border-color: #cbd5e0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sleeper-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sleeper-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.sleeper-btn.loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: auto;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Progress Bar */
+.sleeper-progress {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 12px 0;
+  border: 1px solid #cbd5e0;
+}
+
+.sleeper-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4299e1, #10b981);
+  width: 0%;
+  transition: width 0.5s ease-out;
+  border-radius: 2px;
+}
+
+/* Progress Status Text */
+#analysis-progress, #queue-progress, #clear-progress {
+  transition: width 0.5s ease-out;
+}
+
+#queue-status, #clear-status {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+  min-height: 18px;
+  font-weight: 500;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
 }
 
 .sleeper-btn.primary {
@@ -181,6 +337,38 @@
   border: 1px solid #e2e8f0;
   min-height: 40px;
   padding: 16px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.sleeper-results.loading {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.sleeper-results.success {
+  background: #d1fae5;
+  border-color: #10b981;
+}
+
+.sleeper-results.error {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .analysis-summary {
@@ -196,6 +384,12 @@
   margin: 4px 0;
   border-radius: 6px;
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.result-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .result-item.high {

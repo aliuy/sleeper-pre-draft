@@ -11,6 +11,7 @@ class SleeperDraftHelper {
         this.players = null;
         this.queueElements = new Map();
         this.initialized = false;
+        this.settings = null; // Will be loaded in init
         
         this.log('Initializing Sleeper Draft Helper...');
         this.init();
@@ -48,15 +49,42 @@ class SleeperDraftHelper {
             // Inject our UI
             await this.injectUI();
             
-            this.initialized = true;
-            this.log('Initialization complete');
-            
-        } catch (error) {
-            this.log(`Initialization error: ${error.message}`, 'error');
-        }
+        this.initialized = true;
+        this.log('Initialization complete');
+        
+    } catch (error) {
+        this.log(`Initialization error: ${error.message}`, 'error');
     }
+}
 
-    async loadPlayers() {
+// Phase 4: Enhanced UI/UX helper methods
+setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        button.classList.add('loading');
+        button.dataset.originalText = button.textContent;
+        button.textContent = '';
+        button.disabled = true;
+    } else {
+        button.classList.remove('loading');
+        button.textContent = button.dataset.originalText || button.textContent;
+        button.disabled = false;
+    }
+}
+
+showError(container, message) {
+    container.className = 'sleeper-results error';
+    container.innerHTML = `<div class="error">❌ ${message}</div>`;
+}
+
+showSuccess(container, message) {
+    container.className = 'sleeper-results success';
+    container.innerHTML = `<div class="success">✅ ${message}</div>`;
+}
+
+showInfo(container, message) {
+    container.className = 'sleeper-results';
+    container.innerHTML = `<div class="info">ℹ️ ${message}</div>`;
+}    async loadPlayers() {
         try {
             this.log('Loading player data...');
             this.log('SleeperAPI available:', typeof SleeperAPI);
@@ -132,20 +160,50 @@ class SleeperDraftHelper {
         container.innerHTML = `
             <div class="sleeper-header">
                 <h3>🏈 Draft Queue Helper</h3>
-                <button class="sleeper-close" onclick="document.getElementById('sleeper-helper-main').classList.add('hidden')">×</button>
+                <div class="sleeper-header-actions">
+                    <button class="sleeper-settings-btn" id="settings-btn" title="Settings">⚙️</button>
+                    <button class="sleeper-close" onclick="document.getElementById('sleeper-helper-main').classList.add('hidden')">×</button>
+                </div>
             </div>
             
             <div class="sleeper-content">
                 <div class="sleeper-section">
                     <label>Paste player names (one per line):</label>
-                    <textarea id="player-input" placeholder="Josh Allen&#10;Christian McCaffrey&#10;Tyreek Hill&#10;..."></textarea>
+                    <textarea id="player-input" placeholder="Josh Allen&#10;Christian McCaffrey&#10;Tyreek Hill&#10;..." 
+                              title="Tip: Use Ctrl+V to paste, Ctrl+A to select all"></textarea>
                     <div class="sleeper-actions">
-                        <button id="analyze-players" class="sleeper-btn">Analyze Players</button>
-                        <button id="queue-players" class="sleeper-btn primary">Add to Queue</button>
-                        <button id="clear-queue" class="sleeper-btn secondary">Clear Queue</button>
-                        <button id="validate-queue" class="sleeper-btn">Validate Queue</button>
+                        <button id="analyze-players" class="sleeper-btn" title="Shortcut: Ctrl+Enter">Analyze Players</button>
+                        <button id="validate-queue" class="sleeper-btn" title="Check which players are already queued">Validate Queue</button>
+                        <button id="queue-players" class="sleeper-btn primary" title="Add analyzed players to queue">Add to Queue</button>
+                        <button id="clear-queue" class="sleeper-btn secondary" title="Remove all players from queue">Clear Queue</button>
                     </div>
                     <div id="analysis-results" class="sleeper-results"></div>
+                </div>
+                
+                <!-- Settings Panel (hidden by default) -->
+                <div id="settings-panel" class="sleeper-settings hidden">
+                    <h4>⚙️ Settings</h4>
+                    <div class="setting-item">
+                        <label>
+                            <input type="number" id="delay-setting" min="50" max="1000" value="150" />
+                            Delay between operations (ms)
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="auto-scroll-setting" checked />
+                            Auto-scroll to show progress
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="sound-notifications" />
+                            Sound notifications when complete
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <button id="reset-settings" class="sleeper-btn secondary">Reset to Defaults</button>
+                    </div>
                 </div>
             </div>
             <div class="sleeper-resize-handle"></div>
@@ -172,8 +230,143 @@ class SleeperDraftHelper {
         const clearQueueBtn = container.querySelector('#clear-queue');
         clearQueueBtn.addEventListener('click', () => this.clearQueue());
 
+        // Settings panel
+        const settingsBtn = container.querySelector('#settings-btn');
+        const settingsPanel = container.querySelector('#settings-panel');
+        settingsBtn.addEventListener('click', () => {
+            settingsPanel.classList.toggle('hidden');
+        });
+
+        // Settings functionality
+        this.setupSettingsHandlers(container);
+
+        // Keyboard shortcuts
+        this.setupKeyboardShortcuts(container);
+
         // Setup resize functionality
         this.setupResizeHandlers(container);
+    }
+
+    setupSettingsHandlers(container) {
+        const delayInput = container.querySelector('#delay-setting');
+        const autoScrollInput = container.querySelector('#auto-scroll-setting');
+        const soundInput = container.querySelector('#sound-notifications');
+        const resetBtn = container.querySelector('#reset-settings');
+
+        // Load saved settings
+        this.loadSettings();
+
+        // Save settings on change
+        delayInput.addEventListener('change', () => {
+            this.settings.delay = parseInt(delayInput.value);
+            this.saveSettings();
+        });
+
+        autoScrollInput.addEventListener('change', () => {
+            this.settings.autoScroll = autoScrollInput.checked;
+            this.saveSettings();
+        });
+
+        soundInput.addEventListener('change', () => {
+            this.settings.soundNotifications = soundInput.checked;
+            this.saveSettings();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            this.resetSettings();
+            this.loadSettings();
+        });
+    }
+
+    setupKeyboardShortcuts(container) {
+        const playerInput = container.querySelector('#player-input');
+        
+        // Add keyboard event listener to the container
+        container.addEventListener('keydown', (e) => {
+            // Ctrl+Enter to analyze players
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                this.analyzePlayers();
+            }
+            
+            // Escape to close modal
+            if (e.key === 'Escape') {
+                container.classList.add('hidden');
+            }
+        });
+
+        // Focus management
+        playerInput.addEventListener('keydown', (e) => {
+            // Ctrl+A to select all text
+            if (e.ctrlKey && e.key === 'a') {
+                e.stopPropagation(); // Let the default behavior work for textarea
+            }
+        });
+    }
+
+    // Phase 4: Settings management
+    loadSettings() {
+        const defaultSettings = {
+            delay: 150,
+            autoScroll: true,
+            soundNotifications: false
+        };
+
+        try {
+            const saved = localStorage.getItem('sleeper-helper-settings');
+            this.settings = saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+        } catch (error) {
+            this.settings = defaultSettings;
+        }
+
+        // Apply to UI
+        const delayInput = document.getElementById('delay-setting');
+        const autoScrollInput = document.getElementById('auto-scroll-setting');
+        const soundInput = document.getElementById('sound-notifications');
+
+        if (delayInput) delayInput.value = this.settings.delay;
+        if (autoScrollInput) autoScrollInput.checked = this.settings.autoScroll;
+        if (soundInput) soundInput.checked = this.settings.soundNotifications;
+    }
+
+    saveSettings() {
+        try {
+            localStorage.setItem('sleeper-helper-settings', JSON.stringify(this.settings));
+        } catch (error) {
+            this.log('Failed to save settings', 'warn');
+        }
+    }
+
+    resetSettings() {
+        localStorage.removeItem('sleeper-helper-settings');
+        this.settings = {
+            delay: 150,
+            autoScroll: true,
+            soundNotifications: false
+        };
+    }
+
+    playNotificationSound() {
+        if (this.settings?.soundNotifications) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (error) {
+                this.log('Could not play notification sound', 'warn');
+            }
+        }
     }
 
     setupResizeHandlers(container) {
@@ -196,7 +389,7 @@ class SleeperDraftHelper {
         function handleResize(e) {
             if (!isResizing) return;
             
-            const newWidth = Math.max(400, startWidth + e.clientX - startX);
+            const newWidth = Math.max(600, startWidth + e.clientX - startX);
             const newHeight = Math.max(300, startHeight + e.clientY - startY);
             
             container.style.width = newWidth + 'px';
@@ -228,36 +421,75 @@ class SleeperDraftHelper {
     async analyzePlayers() {
         const input = document.getElementById('player-input');
         const results = document.getElementById('analysis-results');
+        const analyzeBtn = document.getElementById('analyze-players');
         
         const playerNames = input.value.split('\n')
             .map(name => name.trim())
             .filter(name => name.length > 0);
 
         if (playerNames.length === 0) {
-            results.innerHTML = '<div class="error">Please enter player names</div>';
+            this.showError(results, 'Please enter player names');
             return;
         }
 
-        results.innerHTML = '<div class="loading">Analyzing players...</div>';
+        // Enhanced loading state
+        this.setButtonLoading(analyzeBtn, true);
+        results.className = 'sleeper-results loading';
+        results.innerHTML = `
+            <div class="loading">Analyzing ${playerNames.length} players...</div>
+            <div class="sleeper-progress">
+                <div class="sleeper-progress-bar" id="analysis-progress"></div>
+            </div>
+        `;
 
         try {
             const analysis = [];
+            const progressBar = document.getElementById('analysis-progress');
 
-            for (const name of playerNames) {
-                // Use NameMatcher.findPlayerMatches method - include IR/inactive players but prefer active
-                const matches = NameMatcher.findPlayerMatches(name, this.players, { requireActive: false, preferActive: true });
-                analysis.push({
-                    input: name,
-                    matches: matches,
-                    bestMatch: matches[0] || null
-                });
+            for (let i = 0; i < playerNames.length; i++) {
+                const name = playerNames[i];
+                
+                // Update progress
+                const progress = ((i + 1) / playerNames.length) * 100;
+                if (progressBar) {
+                    progressBar.style.width = `${progress}%`;
+                }
+                
+                // Update status
+                results.querySelector('.loading').textContent = `Analyzing ${name}... (${i + 1}/${playerNames.length})`;
+                
+                try {
+                    const matches = NameMatcher.findPlayerMatches(name, this.players, { requireActive: false, preferActive: true });
+                    analysis.push({
+                        input: name,
+                        matches: matches,
+                        bestMatch: matches[0] || null
+                    });
+                } catch (matchError) {
+                    this.log(`Error matching player ${name}: ${matchError.message}`, 'warn');
+                    analysis.push({
+                        input: name,
+                        matches: [],
+                        bestMatch: null,
+                        error: matchError.message
+                    });
+                }
+                
+                // Small delay for smoother UI updates
+                if (i < playerNames.length - 1) {
+                    await this.delay(50);
+                }
             }
 
+            results.className = 'sleeper-results success';
             this.displayAnalysisResults(analysis);
 
         } catch (error) {
-            results.innerHTML = `<div class="error">Analysis failed: ${error.message}</div>`;
+            results.className = 'sleeper-results error';
+            this.showError(results, `Analysis failed: ${error.message}`);
             this.log(`Analysis error: ${error.message}`, 'error');
+        } finally {
+            this.setButtonLoading(analyzeBtn, false);
         }
     }
 
@@ -488,33 +720,45 @@ class SleeperDraftHelper {
     async queuePlayers() {
         if (!this.lastAnalysis || this.lastAnalysis.length === 0) {
             this.log('No analyzed players to queue', 'error');
+            this.showError(document.getElementById('analysis-results'), 'No analyzed players to queue');
             return;
         }
 
         this.log(`Starting queue operation for ${this.lastAnalysis.length} players`);
-        this.log(`Available queue elements: ${this.queueElements.size}`);
-        for (const [key, element] of this.queueElements) {
-            this.log(`  - ${key}: "${element.text}"`);
-        }
-
         const results = document.getElementById('analysis-results');
-        const originalContent = results.innerHTML;
+        const queueBtn = document.getElementById('queue-players');
         
-        results.innerHTML = '<div class="loading">Adding players to queue...</div>';
+        // Enhanced loading state with progress
+        this.setButtonLoading(queueBtn, true);
+        results.className = 'sleeper-results loading';
+        results.innerHTML = `
+            <div class="loading">Adding ${this.lastAnalysis.length} players to queue...</div>
+            <div class="sleeper-progress">
+                <div class="sleeper-progress-bar" id="queue-progress"></div>
+            </div>
+            <div id="queue-status"></div>
+        `;
 
         try {
             let successCount = 0;
             let failureCount = 0;
             const queueResults = [];
+            const progressBar = document.getElementById('queue-progress');
+            const statusDiv = document.getElementById('queue-status');
 
             for (let i = 0; i < this.lastAnalysis.length; i++) {
                 const analysis = this.lastAnalysis[i];
                 const player = analysis.bestMatch;
                 
-                this.log(`\n--- Processing player ${i + 1}/${this.lastAnalysis.length}: ${player.full_name} ---`);
+                // Update progress
+                const progress = ((i + 1) / this.lastAnalysis.length) * 100;
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (statusDiv) statusDiv.textContent = `Processing ${player.full_name}... (${i + 1}/${this.lastAnalysis.length})`;
                 
+                this.log(`Processing player ${i + 1}/${this.lastAnalysis.length}: ${player.full_name}`);
+
                 try {
-                    const success = await this.addPlayerToQueue(player);
+                    const success = await this.addPlayerToQueue(player.full_name);
                     
                     if (success) {
                         successCount++;
@@ -529,7 +773,7 @@ class SleeperDraftHelper {
                         queueResults.push({
                             player: player.full_name,
                             status: 'failed',
-                            message: 'Could not find queue button'
+                            message: 'Could not find player on draft board'
                         });
                         this.log(`❌ Failed to add ${player.full_name} to queue`);
                     }
@@ -543,19 +787,27 @@ class SleeperDraftHelper {
                     this.log(`❌ Error adding ${player.full_name}: ${error.message}`, 'error');
                 }
 
-                // Add delay between requests to avoid overwhelming the UI
-                await this.delay(100);
-                
-                // Update progress in UI
-                results.innerHTML = `<div class="loading">Adding players to queue... (${i + 1}/${this.lastAnalysis.length})</div>`;
+                // Delay between requests for stability
+                if (i < this.lastAnalysis.length - 1) {
+                    await this.delay(this.settings?.delay || 150);
+                }
             }
 
-            // Display queue results
+            // Display enhanced results
+            results.className = successCount > 0 ? 'sleeper-results success' : 'sleeper-results error';
             this.displayQueueResults(queueResults, successCount, failureCount);
+            
+            // Play notification sound if enabled
+            if (successCount > 0) {
+                this.playNotificationSound();
+            }
 
         } catch (error) {
-            results.innerHTML = originalContent + `<div class="error">Queue operation failed: ${error.message}</div>`;
+            results.className = 'sleeper-results error';
+            this.showError(results, `Queue operation failed: ${error.message}`);
             this.log(`Queue operation error: ${error.message}`, 'error');
+        } finally {
+            this.setButtonLoading(queueBtn, false);
         }
     }
 
@@ -563,16 +815,24 @@ class SleeperDraftHelper {
         this.log('Starting queue clear operation...');
         
         const results = document.getElementById('analysis-results');
-        const originalContent = results.innerHTML;
+        const clearBtn = document.getElementById('clear-queue');
         
-        results.innerHTML = '<div class="loading">Clearing queue...</div>';
+        // Enhanced loading state
+        this.setButtonLoading(clearBtn, true);
+        results.className = 'sleeper-results loading';
+        results.innerHTML = `
+            <div class="loading">Scanning for queued players...</div>
+            <div class="sleeper-progress">
+                <div class="sleeper-progress-bar" id="clear-progress"></div>
+            </div>
+            <div id="clear-status"></div>
+        `;
 
         try {
-            // Look for queued players - these might be in different sections
             let queuedPlayers = await this.findQueuedPlayers();
             
             if (queuedPlayers.length === 0) {
-                results.innerHTML = '<div class="info">No players found in queue to clear.</div>';
+                this.showInfo(results, 'No players found in queue to clear.');
                 this.log('No queued players found');
                 return;
             }
@@ -583,11 +843,18 @@ class SleeperDraftHelper {
             let failureCount = 0;
             const clearResults = [];
             let totalPlayers = queuedPlayers.length;
+            const progressBar = document.getElementById('clear-progress');
+            const statusDiv = document.getElementById('clear-status');
 
             // Process players one by one, re-scanning after each removal
             while (queuedPlayers.length > 0) {
-                const queuedPlayer = queuedPlayers[0]; // Always take the first player
+                const queuedPlayer = queuedPlayers[0];
                 const currentIndex = totalPlayers - queuedPlayers.length + 1;
+                
+                // Update progress
+                const progress = (currentIndex / totalPlayers) * 100;
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (statusDiv) statusDiv.textContent = `Removing ${queuedPlayer.name}... (${currentIndex}/${totalPlayers})`;
                 
                 try {
                     this.log(`Removing player ${currentIndex}/${totalPlayers}: ${queuedPlayer.name}`);
@@ -621,33 +888,72 @@ class SleeperDraftHelper {
                     this.log(`❌ Error removing ${queuedPlayer.name}: ${error.message}`, 'error');
                 }
 
-                // Add delay between operations (BLAZING FAST!)
-                await this.delay(100); // MAXIMUM SPEED!
-                
-                // Update progress
-                results.innerHTML = `<div class="loading">Clearing queue... (${currentIndex}/${totalPlayers})</div>`;
-                
-                // Wait for DOM to update after removal
-                await this.delay(100); // MAXIMUM SPEED!
+                // Delay for stability
+                await this.delay(this.settings?.delay || 150);
                 
                 // Re-scan for remaining queued players
                 queuedPlayers = await this.findQueuedPlayers();
                 this.log(`Re-scan found ${queuedPlayers.length} remaining players in queue`);
                 
-                // Safety check - if we've processed the expected number, stop
+                // Safety check
                 if (currentIndex >= totalPlayers) {
                     this.log('Reached expected total, stopping');
                     break;
                 }
             }
 
-            // Display clear results
-            this.displayClearResults(clearResults, successCount, failureCount);
+            // Display enhanced results
+            results.className = successCount > 0 ? 'sleeper-results success' : 'sleeper-results error';
+            this.displayClearResults(clearResults, successCount, failureCount, totalPlayers);
+            
+            // Play notification sound if enabled
+            if (successCount > 0) {
+                this.playNotificationSound();
+            }
 
         } catch (error) {
-            results.innerHTML = originalContent + `<div class="error">Clear queue operation failed: ${error.message}</div>`;
-            this.log(`Clear queue error: ${error.message}`, 'error');
+            results.className = 'sleeper-results error';
+            this.showError(results, `Clear operation failed: ${error.message}`);
+            this.log(`Clear operation error: ${error.message}`, 'error');
+        } finally {
+            this.setButtonLoading(clearBtn, false);
         }
+    }
+
+    // Helper method for displaying clear results
+    displayClearResults(clearResults, successCount, failureCount, totalPlayers) {
+        const results = document.getElementById('analysis-results');
+        
+        let html = `
+            <div class="analysis-summary">
+                Queue Clear Complete: ${successCount}/${totalPlayers} players removed successfully
+            </div>
+        `;
+
+        clearResults.forEach(result => {
+            const statusClass = result.status === 'success' ? 'high' : 'error';
+            const statusIcon = result.status === 'success' ? '✅' : '❌';
+            
+            html += `<div class="result-item ${statusClass}">
+                <div class="player-match">
+                    ${statusIcon} ${result.player} - ${result.message}
+                </div>
+            </div>`;
+        });
+
+        if (successCount > 0) {
+            html += `<div class="success-note">
+                🎉 Successfully removed ${successCount} players from your draft queue!
+            </div>`;
+        }
+
+        if (failureCount > 0) {
+            html += `<div class="error-note">
+                ⚠️ ${failureCount} players could not be removed. They may have already been removed or the page structure has changed.
+            </div>`;
+        }
+
+        results.innerHTML = html;
     }
 
     async addPlayerToQueue(player) {
