@@ -348,3 +348,43 @@
   background: #10b981;
   border-color: #10b981;
 }
+
+/* Validation Results Styles */
+.validation-section {
+  margin: 16px 0;
+}
+
+.validation-header {
+  margin: 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.validation-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Enhanced result item styles for validation */
+.result-item.high .player-match {
+  color: #059669;
+}
+
+.result-item.medium .player-match {
+  color: #d97706;
+}
+
+.result-item.low .player-match {
+  color: #dc2626;
+}
+
+.result-item.error .player-match {
+  color: #dc2626;
+}

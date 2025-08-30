@@ -143,6 +143,7 @@ class SleeperDraftHelper {
                         <button id="analyze-players" class="sleeper-btn">Analyze Players</button>
                         <button id="queue-players" class="sleeper-btn primary">Add to Queue</button>
                         <button id="clear-queue" class="sleeper-btn secondary">Clear Queue</button>
+                        <button id="validate-queue" class="sleeper-btn">Validate Queue</button>
                     </div>
                     <div id="analysis-results" class="sleeper-results"></div>
                 </div>
@@ -157,6 +158,10 @@ class SleeperDraftHelper {
         // Player analysis
         const analyzeBtn = container.querySelector('#analyze-players');
         analyzeBtn.addEventListener('click', () => this.analyzePlayers());
+
+        // Validate queue
+        const validateBtn = container.querySelector('#validate-queue');
+        validateBtn.addEventListener('click', () => this.validateQueue());
 
         // Queue players
         const queueBtn = container.querySelector('#queue-players');
@@ -250,6 +255,190 @@ class SleeperDraftHelper {
         const queueBtn = document.getElementById('queue-players');
         queueBtn.disabled = this.lastAnalysis.length === 0;
         queueBtn.textContent = `Add ${this.lastAnalysis.length} Players to Queue`;
+    }
+
+    async validateQueue() {
+        const input = document.getElementById('player-input');
+        const results = document.getElementById('analysis-results');
+        
+        const playerNames = input.value.split('\n')
+            .map(name => name.trim())
+            .filter(name => name.length > 0);
+
+        if (playerNames.length === 0) {
+            results.innerHTML = '<div class="error">Please enter player names to validate against queue</div>';
+            return;
+        }
+
+        results.innerHTML = '<div class="loading">Validating queue...</div>';
+
+        try {
+            // Get current queue players
+            const queuedPlayers = await this.findQueuedPlayers();
+            this.log(`Found ${queuedPlayers.length} players currently in queue`);
+
+            // Analyze input players
+            const inputAnalysis = [];
+            for (const name of playerNames) {
+                const matches = NameMatcher.findPlayerMatches(name, this.players, { requireActive: false, preferActive: true });
+                inputAnalysis.push({
+                    input: name,
+                    matches: matches,
+                    bestMatch: matches[0] || null
+                });
+            }
+
+            // Compare input vs queue
+            const validation = this.compareInputWithQueue(inputAnalysis, queuedPlayers);
+            this.displayValidationResults(validation, queuedPlayers.length);
+
+        } catch (error) {
+            results.innerHTML = `<div class="error">Validation failed: ${error.message}</div>`;
+            this.log(`Validation error: ${error.message}`, 'error');
+        }
+    }
+
+    compareInputWithQueue(inputAnalysis, queuedPlayers) {
+        const queueNames = queuedPlayers.map(q => q.name.toLowerCase());
+        
+        const inQueue = [];
+        const notInQueue = [];
+        const invalidInputs = [];
+
+        for (const item of inputAnalysis) {
+            if (!item.bestMatch) {
+                invalidInputs.push(item.input);
+                continue;
+            }
+
+            const playerName = item.bestMatch.full_name.toLowerCase();
+            const isQueued = queueNames.some(queueName => 
+                this.namesMatch(playerName, queueName)
+            );
+
+            if (isQueued) {
+                inQueue.push({
+                    input: item.input,
+                    match: item.bestMatch,
+                    confidence: item.bestMatch.confidence
+                });
+            } else {
+                notInQueue.push({
+                    input: item.input,
+                    match: item.bestMatch,
+                    confidence: item.bestMatch.confidence
+                });
+            }
+        }
+
+        return { inQueue, notInQueue, invalidInputs };
+    }
+
+    namesMatch(name1, name2) {
+        // Simple name matching - enhanced for better matching
+        const normalize = name => name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+        const n1 = normalize(name1);
+        const n2 = normalize(name2);
+        
+        // Exact match
+        if (n1 === n2) return true;
+        
+        // Split into words
+        const words1 = n1.split(/\s+/).filter(w => w.length > 0);
+        const words2 = n2.split(/\s+/).filter(w => w.length > 0);
+        
+        // If either name has only one word, check if it's contained in the other
+        if (words1.length === 1 || words2.length === 1) {
+            return n1.includes(n2) || n2.includes(n1);
+        }
+        
+        // If both have multiple words, check various combinations
+        if (words1.length >= 2 && words2.length >= 2) {
+            // Check if first and last words match
+            const firstMatch = words1[0] === words2[0];
+            const lastMatch = words1[words1.length - 1] === words2[words2.length - 1];
+            
+            if (firstMatch && lastMatch) return true;
+            
+            // Check if first name of one matches first name of other, and any other word matches
+            if (firstMatch) {
+                for (let i = 1; i < words1.length; i++) {
+                    for (let j = 1; j < words2.length; j++) {
+                        if (words1[i] === words2[j]) return true;
+                    }
+                }
+            }
+        }
+        
+        // Check if one name is a subset of the other (useful for nicknames)
+        const allWords1 = words1.join(' ');
+        const allWords2 = words2.join(' ');
+        if (allWords1.includes(allWords2) || allWords2.includes(allWords1)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    displayValidationResults(validation, queueSize) {
+        const results = document.getElementById('analysis-results');
+        const { inQueue, notInQueue, invalidInputs } = validation;
+        
+        const totalInput = inQueue.length + notInQueue.length + invalidInputs.length;
+        
+        let html = `<div class="analysis-summary">Queue Validation Results (${queueSize} players in queue):</div>`;
+        
+        // Players already in queue
+        if (inQueue.length > 0) {
+            html += `<div class="validation-section">
+                <h4 class="validation-header">✅ Already in Queue (${inQueue.length}):</h4>`;
+            inQueue.forEach(item => {
+                const confidence = Math.round(item.confidence * 100);
+                html += `<div class="result-item high">
+                    <div class="player-match">
+                        ${item.input} → ${item.match.full_name} (${item.match.position})
+                        <span class="confidence">${confidence}%</span>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Players not in queue
+        if (notInQueue.length > 0) {
+            html += `<div class="validation-section">
+                <h4 class="validation-header">❌ Not in Queue (${notInQueue.length}):</h4>`;
+            notInQueue.forEach(item => {
+                const confidence = Math.round(item.confidence * 100);
+                const confidenceClass = confidence >= 80 ? 'high' : confidence >= 60 ? 'medium' : 'low';
+                html += `<div class="result-item ${confidenceClass}">
+                    <div class="player-match">
+                        ${item.input} → ${item.match.full_name} (${item.match.position})
+                        <span class="confidence">${confidence}%</span>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Invalid inputs
+        if (invalidInputs.length > 0) {
+            html += `<div class="validation-section">
+                <h4 class="validation-header">⚠️ Invalid Players (${invalidInputs.length}):</h4>`;
+            invalidInputs.forEach(input => {
+                html += `<div class="result-item error">
+                    <div class="player-match">${input} → No match found</div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Summary
+        html += `<div class="validation-summary">
+            <strong>Summary:</strong> ${inQueue.length}/${totalInput - invalidInputs.length} players found in queue
+        </div>`;
+
+        results.innerHTML = html;
     }
 
     async queuePlayers() {
