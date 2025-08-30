@@ -7,7 +7,11 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 500px;
-  max-height: 80vh;
+  min-width: 400px;
+  max-width: 90vw;
+  height: auto;
+  min-height: 300px;
+  max-height: 90vh;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -17,6 +21,7 @@
   z-index: 10000;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  resize: none; /* Disable default resize, we'll use custom handle */
 }
 
 .sleeper-main-interface.hidden {
@@ -61,8 +66,28 @@
 
 /* Content */
 .sleeper-content {
-  max-height: 60vh;
+  max-height: calc(90vh - 120px); /* Account for header and resize handle */
   overflow-y: auto;
+  flex: 1;
+}
+
+/* Resize Handle */
+.sleeper-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(-45deg, transparent 40%, #cbd5e0 40%, #cbd5e0 60%, transparent 60%),
+              linear-gradient(-45deg, transparent 50%, #cbd5e0 50%, #cbd5e0 70%, transparent 70%);
+  cursor: nw-resize;
+  border-bottom-right-radius: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.sleeper-resize-handle:hover {
+  opacity: 1;
 }
 
 .sleeper-section {

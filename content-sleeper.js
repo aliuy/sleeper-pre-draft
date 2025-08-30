@@ -148,6 +148,7 @@ class SleeperDraftHelper {
                     <div id="analysis-results" class="sleeper-results"></div>
                 </div>
             </div>
+            <div class="sleeper-resize-handle"></div>
         `;
 
         this.setupEventListeners(container);
@@ -170,6 +171,49 @@ class SleeperDraftHelper {
         // Clear queue
         const clearQueueBtn = container.querySelector('#clear-queue');
         clearQueueBtn.addEventListener('click', () => this.clearQueue());
+
+        // Setup resize functionality
+        this.setupResizeHandlers(container);
+    }
+
+    setupResizeHandlers(container) {
+        const resizeHandle = container.querySelector('.sleeper-resize-handle');
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = parseInt(document.defaultView.getComputedStyle(container).width, 10);
+            startHeight = parseInt(document.defaultView.getComputedStyle(container).height, 10);
+            
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+            e.preventDefault();
+        });
+
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            const newWidth = Math.max(400, startWidth + e.clientX - startX);
+            const newHeight = Math.max(300, startHeight + e.clientY - startY);
+            
+            container.style.width = newWidth + 'px';
+            container.style.height = newHeight + 'px';
+            
+            // Adjust content height
+            const header = container.querySelector('.sleeper-header');
+            const headerHeight = header.offsetHeight;
+            const content = container.querySelector('.sleeper-content');
+            content.style.maxHeight = (newHeight - headerHeight - 20) + 'px';
+        }
+
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
     }
 
     toggleMainInterface() {
